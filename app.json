@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "ParcelGo", "slug": "parcelgo", "version": "1.0.0",
+    "orientation": "portrait", "userInterfaceStyle": "light",
+    "splash": { "backgroundColor": "#F7F8F2" },
+    "android": { "package": "com.parcelgo.app" },
+    "ios": { "bundleIdentifier": "com.parcelgo.app" }
+  }
+}
