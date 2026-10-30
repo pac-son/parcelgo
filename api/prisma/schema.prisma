@@ -1,56 +1,154 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
 
-enum UserRole { SENDER RIDER ADMIN }
-enum DeliveryStatus { PENDING MATCHING ACCEPTED PICKED_UP IN_TRANSIT DELIVERED CANCELLED }
-enum ParcelSize { DOCUMENT SMALL MEDIUM LARGE }
-enum PaymentStatus { PENDING PAID REFUNDED FAILED }
-enum KycStatus { NOT_STARTED PENDING VERIFIED REJECTED }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SENDER
+  RIDER
+  ADMIN
+}
+
+enum DeliveryStatus {
+  PENDING
+  MATCHING
+  ACCEPTED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum ParcelSize {
+  DOCUMENT
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum KycStatus {
+  NOT_STARTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
 
 model User {
-  id String @id @default(cuid())
-  fullName String
-  phone String @unique
-  email String? @unique
-  passwordHash String
-  role UserRole @default(SENDER)
-  kycVerified Boolean @default(false)
-  kyc KycVerification?
-  notifications Notification[]
-  messages Message[]
-  riderProfile RiderProfile?
-  sentDeliveries Delivery[] @relation("SenderDeliveries")
-  riderDeliveries Delivery[] @relation("RiderDeliveries")
-  createdAt DateTime @default(now())
+  id              String           @id @default(cuid())
+  fullName        String
+  phone           String           @unique
+  email           String?          @unique
+  passwordHash    String
+  role            UserRole         @default(SENDER)
+  kycVerified     Boolean          @default(false)
+  kyc             KycVerification?
+  notifications   Notification[]
+  messages        Message[]
+  riderProfile    RiderProfile?
+  sentDeliveries  Delivery[]       @relation("SenderDeliveries")
+  riderDeliveries Delivery[]       @relation("RiderDeliveries")
+  createdAt       DateTime         @default(now())
 }
-model KycVerification { id String @id @default(cuid()); userId String @unique; user User @relation(fields:[userId],references:[id]); status KycStatus @default(NOT_STARTED); providerRef String? @unique; documentType String?; submittedAt DateTime?; reviewedAt DateTime?; rejectionReason String?; updatedAt DateTime @updatedAt }
-model Notification { id String @id @default(cuid()); userId String; user User @relation(fields:[userId],references:[id]); title String; body String; readAt DateTime?; createdAt DateTime @default(now()) }
-model Message { id String @id @default(cuid()); deliveryId String; delivery Delivery @relation(fields:[deliveryId],references:[id]); senderId String; sender User @relation(fields:[senderId],references:[id]); body String; readAt DateTime?; createdAt DateTime @default(now()) }
-model RiderProfile { id String @id @default(cuid()); userId String @unique; user User @relation(fields:[userId], references:[id]); isOnline Boolean @default(false); vehicleType String; currentLat Float?; currentLng Float?; rating Float @default(5); updatedAt DateTime @updatedAt }
+
+model KycVerification {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id])
+  status          KycStatus @default(NOT_STARTED)
+  providerRef     String?   @unique
+  documentType    String?
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  updatedAt       DateTime  @updatedAt
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id         String    @id @default(cuid())
+  deliveryId String
+  delivery   Delivery  @relation(fields: [deliveryId], references: [id])
+  senderId   String
+  sender     User      @relation(fields: [senderId], references: [id])
+  body       String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model RiderProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  isOnline    Boolean  @default(false)
+  vehicleType String
+  currentLat  Float?
+  currentLng  Float?
+  rating      Float    @default(5)
+  updatedAt   DateTime @updatedAt
+}
+
 model Delivery {
-  id String @id @default(cuid())
-  trackingCode String @unique
-  senderId String
-  riderId String?
-  sender User @relation("SenderDeliveries", fields:[senderId], references:[id])
-  rider User? @relation("RiderDeliveries", fields:[riderId], references:[id])
-  pickupAddress String
-  pickupLat Float?
-  pickupLng Float?
+  id             String         @id @default(cuid())
+  trackingCode   String         @unique
+  senderId       String
+  riderId        String?
+  sender         User           @relation("SenderDeliveries", fields: [senderId], references: [id])
+  rider          User?          @relation("RiderDeliveries", fields: [riderId], references: [id])
+  pickupAddress  String
+  pickupLat      Float?
+  pickupLng      Float?
   dropoffAddress String
-  dropoffLat Float?
-  dropoffLng Float?
-  receiverName String
-  receiverPhone String
-  parcelSize ParcelSize
-  description String?
-  feeKobo Int
-  status DeliveryStatus @default(PENDING)
-  payment Payment?
-  events DeliveryEvent[]
-  messages Message[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dropoffLat     Float?
+  dropoffLng     Float?
+  receiverName   String
+  receiverPhone  String
+  parcelSize     ParcelSize
+  description    String?
+  feeKobo        Int
+  status         DeliveryStatus @default(PENDING)
+  payment        Payment?
+  events         DeliveryEvent[]
+  messages       Message[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
-model DeliveryEvent { id String @id @default(cuid()); deliveryId String; delivery Delivery @relation(fields:[deliveryId],references:[id]); status DeliveryStatus; note String?; createdAt DateTime @default(now()) }
-model Payment { id String @id @default(cuid()); deliveryId String @unique; delivery Delivery @relation(fields:[deliveryId],references:[id]); amountKobo Int; provider String; providerRef String? @unique; status PaymentStatus @default(PENDING); createdAt DateTime @default(now()) }
+
+model DeliveryEvent {
+  id         String         @id @default(cuid())
+  deliveryId String
+  delivery   Delivery       @relation(fields: [deliveryId], references: [id])
+  status     DeliveryStatus
+  note       String?
+  createdAt  DateTime       @default(now())
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  deliveryId  String        @unique
+  delivery    Delivery      @relation(fields: [deliveryId], references: [id])
+  amountKobo  Int
+  provider    String
+  providerRef String?       @unique
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+}
